@@ -99,14 +99,6 @@ for submit_date_str in submit_dates_str:
 
 ans_df = pd.concat(date_frames)
 
-#### reindex for ans_df and pred_df
-ans_df = ans_df.set_index(['submit_date', 'test_id'])
-pred_df = pred_df.set_index(['submit_date', 'test_id'])
-pred_df = pred_df.reindex(ans_df.index)
-ans_df = ans_df.reset_index(['submit_date', 'test_id'])
-pred_df = pred_df.reset_index(['submit_date', 'test_id'])
-
-
 #### SMAPE code from TA
 pd_merged_all = pd.merge( ans_df, pred_df, how='left', on=['submit_date','test_id'] )
 
@@ -154,12 +146,6 @@ for submit_date_str in pd_merged_all['submit_date'].unique():
     pd_merged = pd_merged_all[pd_merged_all['submit_date'] == submit_date_str]
     new_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged[['PM2.5_x','PM10_x','O3_x']].values,
                                                   pd_merged[['PM2.5_y','PM10_y','O3_y']].values)
-
-    ans_date_filter = ans_df['submit_date'] == submit_date_str
-    pred_date_filter = pred_df['submit_date'] == submit_date_str
-    old_SMAPE = symmetric_mean_absolute_percentage_error(
-        ans_df.loc[ans_date_filter, ['PM2.5','PM10','O3']].values,
-        pred_df.loc[pred_date_filter, ['PM2.5','PM10','O3']].values)
 
     ###### feature index
     tuples = [( submit_date_str, os.path.basename(args.submit_path)) ]
