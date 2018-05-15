@@ -152,8 +152,7 @@ for submit_date_str in pd_merged_all['submit_date'].unique():
     task_index = pd.MultiIndex.from_tuples(tuples, names=[
          'submit_date', 'filename'])
 
-    SMAPE_df = pd.DataFrame(data={'old SMAPE':[old_SMAPE],
-                                  'new SMAPE':[new_SMAPE],
+    SMAPE_df = pd.DataFrame(data={'new SMAPE':[new_SMAPE],
                                   'bj SMAPE':[bj_SMAPE],
                                   'lon SMAPE':[lon_SMAPE],
                                   'official SMAPE': [official_SMAPE],
