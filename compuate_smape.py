@@ -99,6 +99,14 @@ for submit_date_str in submit_dates_str:
 
 ans_df = pd.concat(date_frames)
 
+#### reindex for ans_df and pred_df
+ans_df = ans_df.set_index(['submit_date', 'test_id'])
+pred_df = pred_df.set_index(['submit_date', 'test_id'])
+pred_df = pred_df.reindex(ans_df.index)
+ans_df = ans_df.reset_index(['submit_date', 'test_id'])
+pred_df = pred_df.reset_index(['submit_date', 'test_id'])
+
+
 #### SMAPE code from TA
 pd_merged_all = pd.merge( ans_df, pred_df, how='left', on=['submit_date','test_id'] )
 
