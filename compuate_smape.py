@@ -19,7 +19,7 @@ bj_station_list = [
 ld_station_list = ['CD1', 'BL0', 'GR4', 'MY7', 'HV1', 'GN3', 'GR9', 'LW2',
                 'GN0', 'KF1', 'CD9', 'ST5', 'TH4']
 
-def symmetric_mean_absolute_percentage_error(actual, predicted):
+def smape(actual, predicted):
 
     actual = actual.ravel()
     predicted = predicted.ravel()
@@ -104,6 +104,7 @@ pd_merged_all = pd.merge( ans_df, pred_df, how='left', on=['submit_date','test_i
 
 # Data preprocessing: Split test_id
 pd_merged_all['stat_id'], pd_merged_all['hr'] = pd_merged_all['test_id'].str.split('#', 1).str
+pd_merged_all['hr'] = pd_merged_all['hr'].astype(int)
 
 # Data preprocessing: Replace negative values with np.nan ( for ans )
 # Data preprocessing: Replace negative values with 1.0 ( for pred )
@@ -126,49 +127,109 @@ for submit_date_str in pd_merged_all['submit_date'].unique():
     pd_merged_bj_temp = pd_merged_bj[pd_merged_bj['submit_date'] == submit_date_str]
     pd_merged_lon_temp = pd_merged_lon[pd_merged_lon['submit_date'] == submit_date_str]
 
-    bj_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged_bj_temp[['PM2.5_x','PM10_x','O3_x']].values,
+    bj_SMAPE = smape(pd_merged_bj_temp[['PM2.5_x','PM10_x','O3_x']].values,
                                                         pd_merged_bj_temp[['PM2.5_y','PM10_y','O3_y']].values)
-    bj_PM25_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged_bj_temp[['PM2.5_x']].values,
+    bj_PM25_SMAPE = smape(pd_merged_bj_temp[['PM2.5_x']].values,
                                                         pd_merged_bj_temp[['PM2.5_y']].values)
-    bj_PM10_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged_bj_temp[['PM10_x']].values,
+    bj_PM10_SMAPE = smape(pd_merged_bj_temp[['PM10_x']].values,
                                                         pd_merged_bj_temp[['PM10_y']].values)
-    bj_O3_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged_bj_temp[['O3_x']].values,
+    bj_O3_SMAPE = smape(pd_merged_bj_temp[['O3_x']].values,
                                                         pd_merged_bj_temp[['O3_y']].values)
-    lon_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged_lon_temp[['PM2.5_x','PM10_x']].values,
+    lon_SMAPE = smape(pd_merged_lon_temp[['PM2.5_x','PM10_x']].values,
                                                         pd_merged_lon_temp[['PM2.5_y','PM10_y']].values)
-    lon_PM25_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged_lon_temp[['PM2.5_x']].values,
+    lon_PM25_SMAPE = smape(pd_merged_lon_temp[['PM2.5_x']].values,
                                                         pd_merged_lon_temp[['PM2.5_y']].values)
-    lon_PM10_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged_lon_temp[['PM10_x']].values,
+    lon_PM10_SMAPE = smape(pd_merged_lon_temp[['PM10_x']].values,
                                                         pd_merged_lon_temp[['PM10_y']].values)
 
     official_SMAPE = (bj_SMAPE+lon_SMAPE)/2
 
-    pd_merged = pd_merged_all[pd_merged_all['submit_date'] == submit_date_str]
-    new_SMAPE = symmetric_mean_absolute_percentage_error(pd_merged[['PM2.5_x','PM10_x','O3_x']].values,
-                                                  pd_merged[['PM2.5_y','PM10_y','O3_y']].values)
+    ### hour split for 0-23 24-47
+    bj_hour_filter = (pd_merged_bj['hr'] <= 23) & (pd_merged_bj['hr'] >= 0 )
+    pd_merged_bj_0_23 = pd_merged_bj[bj_hour_filter]
+    pd_merged_bj_24_47 = pd_merged_bj[~bj_hour_filter]
+
+    lon_hour_filter = (pd_merged_lon['hr'] <= 23) & (pd_merged_lon['hr'] >= 0 )
+    pd_merged_lon_0_23 = pd_merged_lon[lon_hour_filter]
+    pd_merged_lon_24_47 = pd_merged_lon[~lon_hour_filter]
+
+    bj_0_23_SMAPE = smape(pd_merged_bj_0_23[['PM2.5_x','PM10_x','O3_x']].values,
+                            pd_merged_bj_0_23[['PM2.5_y','PM10_y','O3_y']].values)
+    bj_PM25_0_23_SMAPE = smape(pd_merged_bj_0_23[['PM2.5_x']].values,
+                                pd_merged_bj_0_23[['PM2.5_y']].values)
+    bj_PM10_0_23_SMAPE = smape(pd_merged_bj_0_23[['PM10_x']].values,
+                                pd_merged_bj_0_23[['PM10_y']].values)
+    bj_O3_0_23_SMAPE = smape(pd_merged_bj_0_23[['O3_x']].values,
+                                pd_merged_bj_0_23[['O3_y']].values)
+    lon_0_23_SMAPE = smape(pd_merged_lon_0_23[['PM2.5_x','PM10_x']].values,
+                            pd_merged_lon_0_23[['PM2.5_y','PM10_y']].values)
+    lon_PM25_0_23_SMAPE = smape(pd_merged_lon_0_23[['PM2.5_x']].values,
+                                pd_merged_lon_0_23[['PM2.5_y']].values)
+    lon_PM10_0_23_SMAPE = smape(pd_merged_lon_0_23[['PM10_x']].values,
+                                pd_merged_lon_0_23[['PM10_y']].values)
+
+    bj_24_47_SMAPE = smape(pd_merged_bj_24_47[['PM2.5_x','PM10_x','O3_x']].values,
+                            pd_merged_bj_24_47[['PM2.5_y','PM10_y','O3_y']].values)
+    bj_PM25_24_47_SMAPE = smape(pd_merged_bj_24_47[['PM2.5_x']].values,
+                                pd_merged_bj_24_47[['PM2.5_y']].values)
+    bj_PM10_24_47_SMAPE = smape(pd_merged_bj_24_47[['PM10_x']].values,
+                                pd_merged_bj_24_47[['PM10_y']].values)
+    bj_O3_24_47_SMAPE = smape(pd_merged_bj_24_47[['O3_x']].values,
+                                pd_merged_bj_24_47[['O3_y']].values)
+    lon_24_47_SMAPE = smape(pd_merged_lon_24_47[['PM2.5_x','PM10_x']].values,
+                            pd_merged_lon_24_47[['PM2.5_y','PM10_y']].values)
+    lon_PM25_24_47_SMAPE = smape(pd_merged_lon_24_47[['PM2.5_x']].values,
+                                pd_merged_lon_24_47[['PM2.5_y']].values)
+    lon_PM10_24_47_SMAPE = smape(pd_merged_lon_24_47[['PM10_x']].values,
+                                pd_merged_lon_24_47[['PM10_y']].values)
 
     ###### feature index
     tuples = [( submit_date_str, os.path.basename(args.submit_path)) ]
     task_index = pd.MultiIndex.from_tuples(tuples, names=[
          'submit_date', 'filename'])
 
-    SMAPE_df = pd.DataFrame(data={'new SMAPE':[new_SMAPE],
-                                  'bj SMAPE':[bj_SMAPE],
-                                  'lon SMAPE':[lon_SMAPE],
-                                  'official SMAPE': [official_SMAPE],
-                                  'bj_PM25':[bj_PM25_SMAPE],
-                                  'bj_PM10':[bj_PM10_SMAPE],
-                                  'bj_O3':[bj_O3_SMAPE],
-                                  'lon_PM25':[lon_PM25_SMAPE],
-                                  'lon_PM10':[lon_PM10_SMAPE]}, index=task_index)
+    SMAPE_df = pd.DataFrame(data={'official': [official_SMAPE],
+                                'bj':[bj_SMAPE],
+                                'lon':[lon_SMAPE],
+                                'bj_PM25':[bj_PM25_SMAPE],
+                                'bj_PM10':[bj_PM10_SMAPE],
+                                'bj_O3':[bj_O3_SMAPE],
+                                'lon_PM25':[lon_PM25_SMAPE],
+                                'lon_PM10':[lon_PM10_SMAPE],
+                                'bj_0_23':[bj_0_23_SMAPE],
+                                'lon_0_23':[lon_0_23_SMAPE],
+                                'bj_PM25_0_23':[bj_PM25_0_23_SMAPE],
+                                'bj_PM10_0_23':[bj_PM10_0_23_SMAPE],
+                                'bj_O3_0_23':[bj_O3_0_23_SMAPE],
+                                'lon_PM25_0_23':[lon_PM25_0_23_SMAPE],
+                                'lon_PM10_0_23':[lon_PM10_0_23_SMAPE],
+                                'bj_24_47':[bj_24_47_SMAPE],
+                                'lon_24_47':[lon_24_47_SMAPE],
+                                'bj_PM25_24_47':[bj_PM25_24_47_SMAPE],
+                                'bj_PM10_24_47':[bj_PM10_24_47_SMAPE],
+                                'bj_O3_24_47':[bj_O3_24_47_SMAPE],
+                                'lon_PM25_24_47':[lon_PM25_24_47_SMAPE],
+                                'lon_PM10_24_47':[lon_PM10_24_47_SMAPE],
+                                  },
+                                index=task_index)
 
     logger.info("submit_date : {}".format(submit_date.strftime("%Y-%m-%d")))
     logger.info("official : {}".format(official_SMAPE))
     logger.info("bj : {}".format(bj_SMAPE))
     logger.info("ld : {}".format(lon_SMAPE))
     logger.info("bj_PM25 : {}".format(bj_PM25_SMAPE))
+    logger.info("bj_PM25_0_23 : {}".format(bj_PM25_0_23_SMAPE))
+    logger.info("bj_PM25_24_47 : {}".format(bj_PM25_24_47_SMAPE))
     logger.info("bj_PM10 : {}".format(bj_PM10_SMAPE))
+    logger.info("bj_PM10_0_23 : {}".format(bj_PM10_0_23_SMAPE))
+    logger.info("bj_PM10_24_47 : {}".format(bj_PM10_24_47_SMAPE))
     logger.info("bj_O3 : {}".format(bj_O3_SMAPE))
+    logger.info("bj_O3_0_23 : {}".format(bj_O3_0_23_SMAPE))
+    logger.info("bj_O3_24_47 : {}".format(bj_O3_24_47_SMAPE))
     logger.info("lon_PM25 : {}".format(lon_PM25_SMAPE))
+    logger.info("lon_PM25_0_23 : {}".format(lon_PM25_0_23_SMAPE))
+    logger.info("lon_PM25_24_47 : {}".format(lon_PM25_24_47_SMAPE))
     logger.info("lon_PM10 : {}".format(lon_PM10_SMAPE))
+    logger.info("lon_PM10_0_23 : {}".format(lon_PM10_0_23_SMAPE))
+    logger.info("lon_PM10_24_47 : {}".format(lon_PM10_24_47_SMAPE))
 
