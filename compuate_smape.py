@@ -213,7 +213,7 @@ for submit_date_str in pd_merged_all['submit_date'].unique():
                                   },
                                 index=task_index)
 
-    logger.info("submit_date : {}".format(submit_date.strftime("%Y-%m-%d")))
+    logger.info("submit_date : {}".format(submit_date_str))
     logger.info("official : {}".format(official_SMAPE))
     logger.info("bj : {}".format(bj_SMAPE))
     logger.info("ld : {}".format(lon_SMAPE))
